@@ -1,8 +1,7 @@
 // Using the MPU6050 and an EKF , orientation of the sensor is estimated
 
-// TODO:
-// 1) Set the equations of the filter (in all cases, skip the generalization and work with specific dimensions)
-// 2) Approximate Jacobian with forward finite differences
+// Notice that abbreviations have been made where possible, leading to specialized code.
+// E.g. H is the unity matrix and ommited from the EKF equations
 
 
 
