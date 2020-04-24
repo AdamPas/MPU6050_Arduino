@@ -1,25 +1,35 @@
-// Using the MPU6050 and an EKF , orientation of the sensor is estimated
-
-// Notice that abbreviations have been made where possible, leading to specialized code.
-// E.g. H is the unity matrix and ommited from the EKF equations
-
+/*
+ * Author: adam pasvatis
+ * 
+ * Using the MPU6050 IMU and an EKF, orientation of the sensor is estimated as the components of the gravity vector (referred to as R)
+ * Specifically, the state vector consists of the 3 components of the gravity vector in the local IMU axis
+ * 
+ * For the theoretical analysis, have a look here:
+ * http://www.starlino.com/imu_guide.html
+ * 
+ * For a simplified fusion with fixed weight, have a look here: 
+ * http://www.starlino.com/imu_kalman_arduino.html
+ * 
+ * Extended Kalman Filter:
+ * Prediction step: Previous state + gyro measurements
+ * Correction step: Accelerometer measurement
+ * 
+ * Notice that calculation simplifications have been made where possible, leading to specialized code for the EKF.
+ * E.g. H is the unity matrix and ommited from the EKF equations, as is its Jacobian
+ */
 
 
 #include "I2Cdev.h"
 #include "MPU6050.h"
 #include <math.h>
-
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
-#endif
+#include "Wire.h"
 
 #define DIGITS 4                // number of digits to display for floatting numbers
 #define PI 3.14159265
+#define G 9.81
 
 #define LSB_PER_G 16384.0       // bits per g
 #define LSB_PER_DEGSEC 131      // bits per degree/sec
-#define G 9.81
-
 #define ACC_SENSITIVITY 2       // in g
 #define GYRO_SENSITIVITY 250    // in degrees/sec
 
@@ -28,27 +38,23 @@
 
 /***Variables declaration***/
 
-MPU6050 accelgyro;
+MPU6050 accelgyro;    // the IMU sensor
 
 float R_Estim[3];     // estimation of projection of normalized gravitation vector
 float R_Accel[3];     // projection of normalized gravitation vector on x/y/z axis, as measured by accelerometer (in g)
-float R_Gyro[3];      // projection of normalized gravitation vector obtained from last estimated value and gyro movement (in g)
+float R_Gyro[3];      // projection of normalized gravitation vector obtained from last estimated value and gyro movement (in g) - for comparison
 
 float P[3][3] = {{1,0,0},{0,1,0},{0,0,1}};                 // state covariance matrix
 float Q[3][3] = {{1e-4,0,0},{0,1e-4,0},{0,0,1e-4}};        // model and gyro noise covariance
 float R[3][3] = {{1e-3,0,0},{0,1e-3,0},{0,0,1e-3}};        // accelerometer noise covariance
 
-float F[3][3];                                    // update Jacobian (updated in every iteration)
+float F[3][3];                                    // model Jacobian (updated in every iteration)
 float H[3][3] = {{1,0,0},{0,1,0},{0,0,1}};        // measurement Jacobian
-float K[3][3];        // Kalman gain
+float K[3][3];                                    // Kalman gain (updated in every iteration)
 
-bool no_inverse = false;
-
-float g_ang_vel[3];     // in degrees/sec
-float dt;
-float gyro_weight = 10; // the larger, the more we trust the gyro (it's actually w_gyro / w_accel) - fixed
+float g_ang_vel[3];     // gyro measurement vector in degrees/sec
+float dt;               // time step
 unsigned long t_old;    // for measuring time elapsed
-bool firstTime;         // true if it is the first iteration of the estimation algorithm
 
 /**********************************************************/
     
@@ -73,10 +79,10 @@ void setup() {
     accelgyro.initialize();
 
     // verify connection
-//    Serial.println("Testing device connections...");
-//    Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
-//
-//    
+    Serial.println("Testing device connections...");
+    Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+
+    
 //    // Update internal offsets (necessary every now and again)
 //    Serial.println("Updating internal sensor offsets...");
 //    accelgyro.setXAccelOffset(-3285);
@@ -93,9 +99,13 @@ void setup() {
     
 
     t_old = micros();
-    firstTime = true;
+   // firstTime = true;
 
-    
+    // Initialize estimation
+    R_Estim[0] = 0.0;
+    R_Estim[1] = 0.0;
+    R_Estim[2] = 1.0;
+
     // configure Arduino LED pin for output
     pinMode(LED_PIN, OUTPUT);
 }
@@ -106,8 +116,6 @@ void loop() {
 
     getEstimation(); 
 
-    // Serial.println(no_inverse);
-
     //Serial.println("Accel Gyro Estimation");
     Serial.print(R_Accel[2]);    //Inclination X axis (as measured by accelerometer)
     Serial.print(" ");
@@ -116,10 +124,10 @@ void loop() {
     Serial.print(R_Estim[2]);   //Inclination X axis (estimated / filtered)
     Serial.println(" ");
 
-
 //    print_array(F);
     
 }
+
 
 void getEstimation(){
 
@@ -169,15 +177,6 @@ void getEstimation(){
 //    Serial.print('\n');
 
     /**********************************************************/
-
-    if(firstTime){
-      // initialize algorithm with accelerometer measurement
-      for(i=0;i<3;i++){
-        R_Estim[i] = R_Accel[i];
-      }
-      firstTime = false;
-    }
-    else{
 
       /** EKF Prediction step **/
       
@@ -233,16 +232,11 @@ void getEstimation(){
 
       /********************************/
 
-      /*     
-      // Weighted Method: combine Accelerometer and Gyro readings
-      for(i=0;i<=2;i++) 
-        R_Estim[i] = (R_Accel[i] + gyro_weight * R_Gyro[i]) / (1 + gyro_weight);
-      */
-    }
 }
 
 
 inline void print_data(const int16_t a[], int len){
+// Prints a vector of length len
 
     for(int i=0;i<len;i++){
       Serial.print(a[i]); Serial.print("\t");
@@ -251,6 +245,7 @@ inline void print_data(const int16_t a[], int len){
 }
 
 inline void print_data(const float a[], int len){
+// Prints a vector of length len
 
     for(int i=0;i<len;i++){
       Serial.print(a[i]); Serial.print("\t");
@@ -259,6 +254,7 @@ inline void print_data(const float a[], int len){
 }
 
 inline void print_array(const float A[][3]){
+// Prints the specified 3d-array
     
     Serial.print("[");
     for(int i=0;i<3;i++){
@@ -274,6 +270,8 @@ inline void print_array(const float A[][3]){
 }
 
 inline float squared(float x){
+// Squares value
+
   return x*x;
 }
 
@@ -400,9 +398,6 @@ void inv(float A[][3], float result[][3]){
     for(i=0;i<3;i++)
         det = det + (A[0][i]*(A[1][(i+1)%3]*A[2][(i+2)%3] - A[1][(i+2)%3]*A[2][(i+1)%3]));
 
-    if(det == 0.0f)
-      no_inverse = true;
-
     for(i=0;i<3;i++){
         for(j=0;j<3;j++)
             result[i][j] = ((A[(i+1)%3][(j+1)%3] * A[(i+2)%3][(j+2)%3]) - (A[(i+1)%3][(j+2)%3]*A[(i+2)%3][(j+1)%3]))/ det ;
@@ -412,7 +407,7 @@ void inv(float A[][3], float result[][3]){
 
 void evaluate_R(float R[],float R_result[]){
   
-// Evaluates the update function of the EKF, at the given R[n-1] and gives the result in R_result
+// Evaluates the prediction function of the EKF, at the given R[n-1] and gives the result in R_result
 
     int i;
     float Az[2];          //angles between projection of the vector on XZ/YZ plane and Z axis (deg)
@@ -433,7 +428,7 @@ void evaluate_R(float R[],float R_result[]){
 
 
 void update_F(){
-// Calculates Jacobian with central finite differences
+// Approximates the prediction Jacobian with central finite differences
 
     float step = 1e-4; // the finite difference step
     int i,j;
@@ -463,7 +458,5 @@ void update_F(){
         for(j=0;j<3;j++){
             F[j][i] = (R_step_forward[j] - R_step_back[j]) / (2*step);
         }
-        
-
     }
 }
