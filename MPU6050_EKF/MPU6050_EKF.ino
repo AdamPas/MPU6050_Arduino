@@ -74,7 +74,7 @@ void setup() {
     Serial.begin(38400);
 
     // initialize device
-    //Serial.println("Initializing I2C devices...");
+    Serial.println("Initializing I2C devices...");
     // with accel_range = +-2g, gyro_range = +-250 degrees/sec
     accelgyro.initialize();
 
@@ -117,14 +117,27 @@ void loop() {
     getEstimation(); 
 
     //Serial.println("Accel Gyro Estimation");
-    Serial.print(R_Accel[2]);    //Inclination X axis (as measured by accelerometer)
-    Serial.print(" ");
-    Serial.print(R_Gyro[2]);    //Inclination X axis (gyro)
-    Serial.print(" ");
-    Serial.print(R_Estim[2]);   //Inclination X axis (estimated / filtered)
-    Serial.println(" ");
+    Serial.print(R_Accel[0]);    //Inclination X axis (as measured by accelerometer)
+    Serial.print(",");
+    Serial.print(R_Gyro[0]);    //Inclination X axis (gyro)
+    Serial.print(",");
+    Serial.print(R_Estim[0]);   //Inclination X axis (estimated / filtered)
+    Serial.print(",");    
+    Serial.print(R_Accel[1]);    //Inclination Y axis (as measured by accelerometer)
+    Serial.print(",");
+    Serial.print(R_Gyro[1]);    //Inclination Y axis (gyro)
+    Serial.print(",");
+    Serial.print(R_Estim[1]);   //Inclination Y axis (estimated / filtered)
+    Serial.print(",");
+    Serial.print(R_Accel[2]);    //Inclination Z axis (as measured by accelerometer)
+    Serial.print(",");
+    Serial.print(R_Gyro[2]);    //Inclination Z axis (gyro)
+    Serial.print(",");
+    Serial.print(R_Estim[2]);   //Inclination Z axis (estimated / filtered)
+    Serial.print("\n");
 
 //    print_array(F);
+
     
 }
 
@@ -200,9 +213,9 @@ void getEstimation(){
         dot(F, Temp2, Temp1);    // F * (P * F_transpose)        
         plus(Temp1, Q, P);       // add process noise      
       }
-      else{
-        Serial.println("Skipping update!");
-      }
+//      else{
+//        Serial.println("Skipping update!");
+//      }
 
       // Save the gyro estimation for comparison
       for(i=0;i<3;i++)
