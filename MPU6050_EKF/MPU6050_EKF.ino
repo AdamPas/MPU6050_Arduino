@@ -198,15 +198,15 @@ void getEstimation(){
         // Update with gyro data and previous estimate, only if Rz is not too small.
         // Else, keep the previous estimation (skip prediction step)
         
-        // evaluate the update function, using previous estimation and gyro measurement
+        // first calculate Jacobian of update function (linearization at previous state)
+        update_F();
+
+        // then evaluate the update function, using previous estimation and gyro measurement
         evaluate_R(R_Estim,R_Estim);
 
         // normalize gyro estimation
         normalized(R_Estim);   
 
-         // calculate Jacobian of update function, with f.d.
-        update_F();
-  
         // update state covariance
         transpose(F,Temp1);      // get the transpose of F
         dot(P, Temp1, Temp2);    // P * F_transpose
@@ -443,9 +443,9 @@ void evaluate_R(float R[],float R_result[]){
 void update_F(){
 // Approximates the prediction Jacobian with central finite differences
 
-    float step = 1e-4; // the finite difference step
+    float step = 1e-5; // the finite difference step
     int i,j;
-    float Rtemp[3],R_step_back[3], R_step_forward[3]; // temporary arrays to store results for finite differences
+    float Rtemp[3], R_step_back[3], R_step_forward[3]; // temporary arrays to store results for finite differences
 
     
     // for each of the 3 state variables
