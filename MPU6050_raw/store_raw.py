@@ -1,11 +1,12 @@
 '''
+Author: adam
+
 A script to read data from the IMU sensor 6050, through the serial.
 The data is saved in a .csv file.
-Format: N rows, 9 columns
-The first column contains the accelerometer measurements for the X axis.
-The second the gyro estimation for the X axis.
-The third column contains the EKF resulting estimation for the X axis.
-etc. for Y and Z
+Format: N rows, 7 columns
+		Each row contains a different timestamp
+        First 3 columns contain the accelerometer data, the next 3 columns the gyro, last column contains the dt for this timestep
+        Units for acceleration are in m/sec² and for angular velocity in deg/sec
 '''
 
 import serial
@@ -42,23 +43,27 @@ while counter < args.num_data:
 	
 	# Parse values and convert to float
 	data_list = s.split(',')
+	print(data_list)
 	for i in range(len(data_list)):
 		data_list[i] = float(data_list[i])
 
 	# Append to total list
 	data.append(data_list)
 
-	print(data[-1])
+	# For debugging purposes, print the last (most current) row
+	# print(data[-1])
 
 	counter += 1
 
 
 print('Closing python serial port!')
-print('Writting data to file: ', args.write_file)
+ser.close()
 
 # save data to csv file for later processing
-with open(args.write_file, "w", newline="") as f:
+filepath = './Data/' + args.write_file
+print('Writting data to file: ', filepath)
+
+with open(filepath, "w", newline="") as f:
     writer = csv.writer(f)
     writer.writerows(data)
 
-ser.close()

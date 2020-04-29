@@ -75,19 +75,20 @@ void setup() {
 
     
     // Update internal offsets (necessary every now and again)
-    Serial.println("Updating internal sensor offsets...");
-    accelgyro.setXAccelOffset(-3285);
-    delay(5);
-    accelgyro.setYAccelOffset(1300);
-    delay(5);
-    accelgyro.setZAccelOffset(1155);
-    delay(5);
-    accelgyro.setXGyroOffset(108);
-    delay(5);
-    accelgyro.setYGyroOffset(-68);
-    delay(5);
-    accelgyro.setZGyroOffset(-2);
     
+//    Serial.println("Updating internal sensor offsets...");
+//    accelgyro.setXAccelOffset(-3285);
+//    delay(5);
+//    accelgyro.setYAccelOffset(1300);
+//    delay(5);
+//    accelgyro.setZAccelOffset(1155);
+//    delay(5);
+//    accelgyro.setXGyroOffset(108);
+//    delay(5);
+//    accelgyro.setYGyroOffset(-68);
+//    delay(5);
+//    accelgyro.setZGyroOffset(-2);
+//    
 
     t_old = micros();
    // firstTime = true;
