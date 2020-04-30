@@ -235,5 +235,5 @@ if __name__ == '__main__':
 	accel, gyro, ekf = ekf(1e-5,1e-4)
 
 	# plotting
-	#plot(accel, gyro, ekf)
+	plot(accel, gyro, ekf)
 
