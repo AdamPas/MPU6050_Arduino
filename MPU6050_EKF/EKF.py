@@ -117,6 +117,7 @@ def ekf(gyro_noise,accel_noise):
 	Q = np.array([[gyro_noise, 0.0, 0.0], [0.0, gyro_noise, 0.0], [0.0, 0.0, gyro_noise]])
 	# accelerometer noise covariance
 	R = np.array([[accel_noise, 0.0, 0.0], [0.0, accel_noise, 0.0], [0.0, 0.0, accel_noise]])
+	I = np.eye(3)           # unit array
 	###################
 
 	### EKF algorithm ###
@@ -146,7 +147,6 @@ def ekf(gyro_noise,accel_noise):
 		# append the new estimation to both the ekf and the gyro vectors
 		R_Estim = np.append(R_Estim,R_new,axis=1)
 		R_Gyro = np.append(R_Gyro,R_new,axis=1)
-
 		########################
 
 		### EKF Correction step ###
@@ -162,9 +162,10 @@ def ekf(gyro_noise,accel_noise):
 		# normalize estimation vector (again)
 		normalize(R_Estim[:,-1:])
 
-		# update covariance matrix
-		P -= np.dot(K, np.dot(H, P))
 
+		# update covariance matrix
+		#P -= np.dot(K, np.dot(H, P))	# this implementation looks nice, but can be numerically unstable
+		P = np.dot((I-np.dot(K,H)),np.dot(P,(I-np.dot(K,H)).T)) + np.dot(K,np.dot(R,K.T))
 		#########################
 
 	return R_Accel, R_Gyro, R_Estim
