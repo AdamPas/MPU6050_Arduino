@@ -93,6 +93,7 @@ def plot(accel, gyro, ekf):
 	plt.plot(ekf[2,:],label = 'estim')
 	plt.legend()
 
+
 	plt.show()
 
 
@@ -107,6 +108,7 @@ def ekf(gyro_noise,accel_noise):
 	# Initialize algorithm with accelerometer measurement
 	R_Gyro = np.array(R_Accel[:,0]).reshape(3,1)
 	R_Estim = np.array(R_Accel[:,0]).reshape(3,1)
+
 
 	### EKF arrays ###
 	K = np.eye(3)  			# Kalman gain (updated in every iteration)
@@ -141,7 +143,7 @@ def ekf(gyro_noise,accel_noise):
 		else:
 			R_new = R_Estim[:,-1:]
 
-		# normalize gyro estimation
+		# normalize gyro estimation (essentially, get the direction cosines)
 		normalize(R_new)
 
 		# append the new estimation to both the ekf and the gyro vectors
@@ -156,10 +158,10 @@ def ekf(gyro_noise,accel_noise):
 		# compute kalman gain
 		K = np.dot(P, np.dot(H.T, np.linalg.inv(inn_covariance)))
 
-		# correct state vector (with innovation)
+		# correct state vector (with innovation), no appending here!
 		R_Estim[:,-1:] += np.dot(K, (R_Accel[:,i:i+1]-np.dot(H, R_Estim[:,-1:])))
 
-		# normalize estimation vector (again)
+		# normalize estimation vector (essentially, get the direction cosines)
 		normalize(R_Estim[:,-1:])
 
 
@@ -233,7 +235,7 @@ if __name__ == '__main__':
 	data_loader(filepath);
 	
 	# EKF function
-	accel, gyro, ekf = ekf(1e-5,1e-4)
+	accel, gyro, ekf = ekf(1e-3,1e-2)
 
 	# plotting
 	plot(accel, gyro, ekf)
