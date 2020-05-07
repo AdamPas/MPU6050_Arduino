@@ -9,4 +9,7 @@ This repo contains 3 folders:
 3) The EKF folder contains code for both the Arduino the python. 
 By running the Arduino script "MPU6050_EKF.ino", data from the sensors are communicated through the serial to the PC.
 This data can be read and stored in the "Data" subfolder, by executing the "store_raw.py" script. In reality, this data is already transmitted in physical units from the Arduino, so they are not exactly "raw".
-Finally, the script "EKF.py" reads a specified file with IMU data and performs the EKF estimation algorithm to find the best possible estimation of the gravity acceleration components on the 3 local axis. Results are plotted.
+Finally, the script "EKF.py" reads a specified file with IMU data and performs the EKF estimation algorithm to find the best possible estimation of the gravity acceleration components on the 3 local axis. In the end, results are transformed to angles between -g vector and local axis.
+Notice that the angles are in the range [0,180] degrees. 
+An angle < 90 degrees means positive alignment of -g with the axis.
+An angle >90 degrees means the opposite. 
