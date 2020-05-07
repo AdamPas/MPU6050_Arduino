@@ -62,13 +62,13 @@ def data_loader(filepath):
 
 	print('Loaded data successfully!')
 
-def plot(accel, gyro, ekf, angles):
+def plot(accel, gyro, ekf):
 # Plot data
 
 	plt.figure(1)
 	plt.xlabel("time")
-	plt.ylabel("Rx")
-	plt.title("Gravity x component")
+	plt.ylabel("Axr")
+	plt.title("Angle between -g and x axis")
 	plt.plot(accel[0,:],label = 'accel')
 	plt.plot(gyro[0,:],label = 'gyro')
 	plt.plot(ekf[0,:],label = 'estim')
@@ -77,8 +77,8 @@ def plot(accel, gyro, ekf, angles):
 
 	plt.figure(2)
 	plt.xlabel("time")
-	plt.ylabel("Ry")
-	plt.title("Gravity y component")
+	plt.ylabel("Ayr")
+	plt.title("Angle between -g and y axis")
 	plt.plot(accel[1,:],label = 'accel')
 	plt.plot(gyro[1,:],label = 'gyro')
 	plt.plot(ekf[1,:],label = 'estim')
@@ -86,21 +86,13 @@ def plot(accel, gyro, ekf, angles):
 
 	plt.figure(3)
 	plt.xlabel("time")
-	plt.ylabel("Rz")
-	plt.title("Gravity z component")
+	plt.ylabel("Azr")
+	plt.title("Angle between -g and z axis")
 	plt.plot(accel[2,:],label = 'accel')
 	plt.plot(gyro[2,:],label = 'gyro')
 	plt.plot(ekf[2,:],label = 'estim')
 	plt.legend()
 
-	plt.figure(4)
-	plt.xlabel("time")
-	plt.ylabel("degrees")
-	plt.title("Angles of gravity vector")
-	plt.plot(angles[0,:],label = 'Axr')
-	plt.plot(angles[1,:],label = 'Ayr')
-	plt.plot(angles[2,:],label = 'Azr')
-	plt.legend()
 
 	plt.show()
 
@@ -116,8 +108,6 @@ def ekf(gyro_noise,accel_noise):
 	# Initialize algorithm with accelerometer measurement
 	R_Gyro = np.array(R_Accel[:,0]).reshape(3,1)
 	R_Estim = np.array(R_Accel[:,0]).reshape(3,1)
-
-	angles = np.array([90, 90, 0]).reshape(3,1)
 
 
 	### EKF arrays ###
@@ -180,14 +170,9 @@ def ekf(gyro_noise,accel_noise):
 		P = np.dot((I-np.dot(K,H)),np.dot(P,(I-np.dot(K,H)).T)) + np.dot(K,np.dot(R,K.T))
 		#########################
 
-		# components of gravity vector in local axis --> angles in degrees
-		temp = np.zeros((3,1))
-		for k in range(3):
-			temp[k] = math.degrees(math.acos(R_Estim[k,-1]))
+		
 
-		angles = np.append(angles,temp,axis=1)
-
-	return R_Accel, R_Gyro, R_Estim, angles
+	return R_Accel, R_Gyro, R_Estim
 	##########################
 
 
@@ -243,6 +228,19 @@ def update_F(F,last_estim,curr_iter):
 		F[:,i:] = ((R_step_forward[:] - R_step_back[:]) / (2*step))
 
 
+def angles(accel, gyro, ekf):
+	# Turns the argument data from direction cosines to angles between gravity vector and axis
+	# Input: Direction cosines of -g from accelerometer, gyro estimations and ekf output
+	# Output: No output. Corresponding angles in [0,180] degrees in the same arrays
+
+	for i in range(accel.shape[0]):
+		for j in range(accel.shape[1]):
+			accel[i,j] = math.degrees(math.acos(accel[i,j]))
+			gyro[i,j] = math.degrees(math.acos(gyro[i,j]))
+			ekf[i,j] = math.degrees(math.acos(ekf[i,j]))
+
+
+
 if __name__ == '__main__':
 
 	# parse command line arguments
@@ -251,9 +249,12 @@ if __name__ == '__main__':
 	# load sensor data
 	data_loader(filepath);
 	
-	# EKF function
-	accel, gyro, ekf, angles = ekf(1e-3,1e-2)
+	# EKF function - results are direction cosines
+	accel, gyro, ekf = ekf(1e-3,1e-2)
+
+	# turn acquired results to angles in degrees
+	angles(accel, gyro, ekf)
 
 	# plotting
-	plot(accel, gyro, ekf, angles)
+	plot(accel, gyro, ekf)
 
