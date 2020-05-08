@@ -166,8 +166,8 @@ def ekf(gyro_noise,accel_noise):
 
 
 		# update covariance matrix
-		#P -= np.dot(K, np.dot(H, P))	# this implementation looks nice, but can be numerically unstable
-		P = np.dot((I-np.dot(K,H)),np.dot(P,(I-np.dot(K,H)).T)) + np.dot(K,np.dot(R,K.T))
+		P -= np.dot(K, np.dot(H, P))
+		
 		#########################
 
 		
