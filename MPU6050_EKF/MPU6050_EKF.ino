@@ -18,8 +18,8 @@
 //#define PI 3.14159265
 #define G 9.81
 
-#define LSB_PER_G 16384.0       // bits per g
-#define LSB_PER_DEGSEC 131      // bits per degree/sec
+#define LSB_PER_G 16384.0         // bits per g
+#define LSB_PER_DEGSEC 131.0      // bits per degree/sec
 //#define ACC_SENSITIVITY 2       // in g
 //#define GYRO_SENSITIVITY 250    // in degrees/sec
 
@@ -76,18 +76,18 @@ void setup() {
     
     // Update internal offsets (necessary every now and again)
     
-//    Serial.println("Updating internal sensor offsets...");
-//    accelgyro.setXAccelOffset(-3285);
-//    delay(5);
-//    accelgyro.setYAccelOffset(1300);
-//    delay(5);
-//    accelgyro.setZAccelOffset(1155);
-//    delay(5);
-//    accelgyro.setXGyroOffset(108);
-//    delay(5);
-//    accelgyro.setYGyroOffset(-68);
-//    delay(5);
-//    accelgyro.setZGyroOffset(-2);
+    Serial.println("Updating internal sensor offsets...");
+    accelgyro.setXAccelOffset(-3285);
+    delay(5);
+    accelgyro.setYAccelOffset(1300);
+    delay(5);
+    accelgyro.setZAccelOffset(1155);
+    delay(5);
+    accelgyro.setXGyroOffset(108);
+    delay(5);
+    accelgyro.setYGyroOffset(-68);
+    delay(5);
+    accelgyro.setZGyroOffset(-2);
 //    
 
     t_old = micros();
